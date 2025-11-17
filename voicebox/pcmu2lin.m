@@ -1,0 +1,32 @@
+function x=pcmu2lin(p,s)
+%PCMU2LIN Convert Mu-law PCM to linear X=(P,S)
+%	lin = pcmu2lin(pcmu) where pcmu contains a vector
+%	of mu-law values in the range 0 to 255.
+%	No checking is performed to see that numbers are in this range.
+%
+%	Output values are divided by the scale factor s:
+%
+%		   s		Output Range
+%
+%		   1		+-8031	(integer values)
+%		4004.2	+-2.005649 (default)
+%		8031		+-1
+%		8159		+-0.9843118 (+-1 nominal full scale)
+%
+%	The default scaling factor 4004.189931 is equal to
+%	sqrt((2207^2 + 5215^2)/2) this follows ITU standard G.711.
+%	The sine wave with PCM-Mu values [158 139 139 158 30 11 11 30]
+%	has a mean square value of unity corresponding to 0 dBm0.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if nargin<2
+  t=9.98953613E-4;
+else
+  t=4/s;
+end
+
+m=15-rem(p,16);
+q=floor(p/128);
+e=(127-p-m+128*q)/16;
+x=(q-0.5).*(pow2(m+16.5,e)-16.5)*t;
