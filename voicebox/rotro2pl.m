@@ -1,0 +1,39 @@
+function [u,v,t]=rotro2pl(r)
+%ROTRO2PL find the plane and rotation angle of a rotation matrix [u,v,t]=r
+% Inputs:
+%
+%     R(n,n)   Rotation matrix
+%
+% Outputs:
+%
+%     U(n,1) and V(n,1) are orthonormal vectors defining a plane in n-dimensional space
+%     T is the rotation angle in radians from U towards V with 0<=T<=pi. If T
+%       is omitted it U and V will be separated by T instead of being orthogonal
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+n=size(r,1);
+[q,e]=schur(r);
+[m,i]=max(abs(e(2:n+1:n^2)));
+z=e(i+1,i)<0; % =1 if negative
+uv=q(:,i+z:1-2*z:i+1-z);
+u=uv(:,1);
+% the following code selects unique values of u and v
+% v=uv(:,2);
+% f=u.*v;         % maximize inner product of u.^2 and v.^2
+% g=(v+u).*(v-u);
+% t=atan2(sum(f.*g),sum(g.^2/4-f.^2))/4;
+% c=cos(t);
+% s=sin(t);
+% uv=uv*[c s; -s c];
+% a=sum(uv)<0;
+% uv=uv*[1-a(1)-a(2) a(2)-a(1); a(1)-a(2) 1-a(1)-a(2)];
+% u=uv(:,1);
+if nargout>2
+    v=uv(:,2);
+    t=atan2(abs(e(i+1,i)),e(i,i));
+else
+    [s,c]=atan2sc(abs(e(i+1,i)),e(i,i));
+    v=uv*[c;s];
+end
