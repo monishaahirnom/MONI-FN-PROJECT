@@ -1,0 +1,53 @@
+function [frq,bnd] = erb2frq(erb)
+%ERB2FRQ  Convert ERB frequency scale to Hertz FRQ=(ERB)
+%	frq = erb2frq(erb) converts a vector of ERB-rate values
+%	to the corresponding frequencies in Hz.
+%   [frq,bnd] =  erb2frq(erb) also calculates the ERB bandwidths
+%
+%    Note that erb values will be clipped to 43.032 which corresponds to infinite frequency.
+%    The inverse function is frq2erb.
+
+%   The erb scale is measured using the notched-noise method [3].
+%
+%	We have df/de = 6.23*f^2 + 93.39*f + 28.52
+%	where the above expression gives the Equivalent Rectangular
+%	Bandwidth (ERB)in Hz  of a human auditory filter with a centre
+%	frequency of f kHz.
+%
+%	By integrating the reciprocal of the above expression, we
+%	get:
+%		e = k ln((f/p-1)/(f/q-1))/d
+%
+%	where p and q are the roots of the equation: -0.312 and -14.7
+%  	and d = (6.23*(p-q))/1000 = 0.08950404
+%
+%	from this we can derive:
+%
+%	f = k/(h-exp(d*e)) + c
+%
+%	where k = 1000 q (1 - q/p) = 676170.4
+%	      h = q/p = 47.06538
+%	      c = 1000q = -14678.49
+%	and f is in Hz
+%
+% Note that the maximum permissible value of e is log(b)/c=43.032 since this gives f=inf
+%
+%	
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+persistent u h k c d
+if ~numel(u)
+    u=[6.23e-6 93.39e-3 28.52];
+    p=sort(roots(u));           % p=[-14678.5 -311.9]
+    d=1e-6*(6.23*(p(2)-p(1)));  % d=0.0895
+    c=p(1);                     % c=-14678.5
+    k = p(1) - p(1)^2/p(2);     % k=676170.4
+    h=p(1)/p(2);                % h=47.06538
+end
+frq = sign(erb).*(k./max(h-exp(d*abs(erb)),0)+c);
+bnd=polyval(u,abs(frq));
+if ~nargout
+    plot(erb,frq,'-x');
+    xlabel(['Frequency (' xticksi 'Erb-rate)']);
+    ylabel(['Frequency (' yticksi 'Hz)']);
+end
